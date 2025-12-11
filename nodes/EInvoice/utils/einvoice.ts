@@ -2,18 +2,41 @@ import type { IExecuteFunctions } from 'n8n-workflow';
 import { BINARY_ENCODING } from 'n8n-workflow';
 
 // @ts-ignore
-import { stringToPDFString } from 'pdfjs-dist/lib/shared/util';
-import { getDocument as readPDF } from 'pdfjs-dist';
-import { DocumentInitParameters } from 'pdfjs-dist/types/src/display/api';
+import type { DocumentInitParameters } from 'pdfjs-dist/legacy/build/pdf';
 
 import { Parser } from 'xml2js';
 
 import { DOCUMENT_TYPES } from '../types/documentTypes';
 import { EInvoice } from '../types/eInvoice';
 
-const FACTUR_X_FILENAMES = ["factur-x.xml", "factur\\055x\\056xml", "zugferd-invoice.xml", "zugferd\\055invoice\\056xml", "ZUGFeRD-invoice.xml", "ZUGFeRD\\055invoice\\056xml", "xrechnung.xml", "xrechnung\\056xml"].map(
-    (name) => stringToPDFString(name),
-);
+const FACTUR_X_FILENAMES = [
+    "factur-x.xml",
+    "factur\\055x\\056xml",
+    "zugferd-invoice.xml",
+    "zugferd\\055invoice\\056xml",
+    "ZUGFeRD-invoice.xml",
+    "ZUGFeRD\\055invoice\\056xml",
+    "xrechnung.xml",
+    "xrechnung\\056xml",
+];
+
+let pdfjsPromise: Promise<typeof import('pdfjs-dist/legacy/build/pdf')>;
+
+function getPdfJs() {
+    if (!pdfjsPromise) {
+        pdfjsPromise = new Function(
+            'return import("pdfjs-dist/legacy/build/pdf.mjs")',
+        )() as Promise<typeof import('pdfjs-dist/legacy/build/pdf')>;
+    }
+
+    return pdfjsPromise;
+}
+
+async function getFacturXFilenames() {
+    const { stringToPDFString } = await getPdfJs();
+
+    return FACTUR_X_FILENAMES.map((name) => stringToPDFString(name));
+}
 
 type Attachment = {
     content: Uint8Array;
@@ -44,11 +67,14 @@ export async function extractEInvoiceFromPDF(
         params.data = Buffer.from(binaryData.data, BINARY_ENCODING).buffer;
     }
 
+    const { getDocument: readPDF } = await getPdfJs();
+    const facturXFilenames = await getFacturXFilenames();
+
     const pdf = await readPDF(params).promise;
     const attachments = await pdf.getAttachments() as Record<string, Attachment>;
 
     for (const [filename, attachment] of Object.entries(attachments)) {
-        if (FACTUR_X_FILENAMES.includes(filename)) {
+        if (facturXFilenames.includes(filename)) {
             const xml = Buffer.from(attachment.content).toString('utf-8');
             if(xml === "") {
                 throw new Error("empty xml-attachment in pdf");
