@@ -8,6 +8,10 @@ import { NodeConnectionType } from 'n8n-workflow';
 
 import * as extraction from './actions/exctraction.operation';
 
+import { GlobalWorkerOptions } from 'pdfjs-dist/build/pdf';
+GlobalWorkerOptions.workerSrc = require('pdfjs-dist/build/pdf.worker.min.js');
+
+
 export class EInvoice implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'E-Invoice',
