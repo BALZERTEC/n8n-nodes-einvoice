@@ -25,9 +25,22 @@ let pdfStringDecoderPromise: Promise<(value: string) => string>;
 
 function getPdfJs() {
     if (!pdfjsPromise) {
-        pdfjsPromise = new Function(
-            'return import("pdfjs-dist/legacy/build/pdf.mjs")',
-        )() as Promise<typeof import('pdfjs-dist/legacy/build/pdf')>;
+        pdfjsPromise = (async () => {
+            const pdfjs = (await new Function(
+                'return import("pdfjs-dist/legacy/build/pdf.mjs")',
+            )()) as typeof import('pdfjs-dist/legacy/build/pdf');
+
+            const workerSrc = new Function(
+                'modulePath',
+                'return require.resolve(modulePath)',
+            )('pdfjs-dist/legacy/build/pdf.worker.mjs');
+
+            if (pdfjs.GlobalWorkerOptions) {
+                pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+            }
+
+            return pdfjs;
+        })();
     }
 
     return pdfjsPromise;
