@@ -1,14 +1,14 @@
 import type {
-	IExecuteFunctions,
-	INodeExecutionData,
-	INodeType,
-	INodeTypeDescription,
+IExecuteFunctions,
+INodeExecutionData,
+INodeType,
+INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeConnectionType } from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import * as extraction from './actions/exctraction.operation';
 
-import { GlobalWorkerOptions } from 'pdfjs-dist/build/pdf';
+import { GlobalWorkerOptions } from 'pdfjs-dist';
 GlobalWorkerOptions.workerSrc = require('pdfjs-dist/build/pdf.worker.min.js');
 
 
@@ -24,8 +24,8 @@ export class EInvoice implements INodeType {
 		defaults: {
 			name: 'E-Invoice',
 		},
-		inputs: [NodeConnectionType.Main],
-		outputs: [NodeConnectionType.Main],
+inputs: [NodeConnectionTypes.Main],
+outputs: [NodeConnectionTypes.Main],
 		properties: [
 			{
 				displayName: 'Resource',
