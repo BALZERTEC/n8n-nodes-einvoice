@@ -1,4 +1,4 @@
-{ 
+{
   "name": "n8n-nodes-einvoice",
   "version": "0.1.1",
   "description": "n8n.io node to handle E-Invoices with PDF or XML Files (ZUGFeRD / XRechnung / Factur-X / EN-16931)",
@@ -59,8 +59,8 @@
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "pdfjs-dist": "^5.3.31",
-    "xml2js": "^0.6.2",
-    "n8n-workflow": "^1.118.2"
+    "n8n-workflow": "^1.118.2",
+    "pdfjs-dist": "^5.4.449",
+    "xml2js": "^0.6.2"
   }
 }
