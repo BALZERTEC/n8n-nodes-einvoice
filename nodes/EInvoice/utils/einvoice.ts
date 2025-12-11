@@ -30,10 +30,11 @@ function getPdfJs() {
                 'return import("pdfjs-dist/legacy/build/pdf.mjs")',
             )()) as typeof import('pdfjs-dist/legacy/build/pdf');
 
-            const workerSrc = new Function(
-                'modulePath',
-                'return require.resolve(modulePath)',
-            )('pdfjs-dist/legacy/build/pdf.worker.mjs');
+            const { pathToFileURL } = await import('node:url');
+            const workerSrc = new URL(
+                '../../../node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
+                pathToFileURL(__dirname + '/'),
+            ).toString();
 
             if (pdfjs.GlobalWorkerOptions) {
                 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
