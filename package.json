@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "pdfjs-dist": "^2.16.105",
+    "pdfjs-dist": "^5.3.31",
     "xml2js": "^0.6.2",
     "n8n-workflow": "^1.72.0"
   }
