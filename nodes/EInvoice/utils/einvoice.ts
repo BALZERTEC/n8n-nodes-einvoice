@@ -21,6 +21,7 @@ const FACTUR_X_FILENAMES = [
 ];
 
 let pdfjsPromise: Promise<typeof import('pdfjs-dist/legacy/build/pdf')>;
+let pdfStringDecoderPromise: Promise<(value: string) => string>;
 
 function getPdfJs() {
     if (!pdfjsPromise) {
@@ -32,10 +33,50 @@ function getPdfJs() {
     return pdfjsPromise;
 }
 
-async function getFacturXFilenames() {
-    const { stringToPDFString } = await getPdfJs();
+async function getPdfStringDecoder() {
+    if (!pdfStringDecoderPromise) {
+        pdfStringDecoderPromise = (async () => {
+            try {
+                const { stringToPDFString } = await new Function(
+                    'return import("pdfjs-dist/shared/util.js")',
+                )();
 
-    return FACTUR_X_FILENAMES.map((name) => stringToPDFString(name));
+                if (typeof stringToPDFString === 'function') {
+                    return stringToPDFString;
+                }
+            } catch (error) {
+                // pdfjs-dist v5 removes stringToPDFString from the main bundle,
+                // so this import may fail on older versions. Fall back silently.
+            }
+
+            try {
+                const { stringToPDFString } = await getPdfJs();
+                if (typeof stringToPDFString === 'function') {
+                    return stringToPDFString;
+                }
+            } catch (error) {
+                // If stringToPDFString is unavailable, fall through to the
+                // backward-compatible decoder below.
+            }
+
+            // Minimal decoder to handle octal escapes such as \055 -> '-'.
+            return (value: string) =>
+                value.replace(/\\([0-7]{3})/g, (match, octal) => {
+                    const charCode = parseInt(octal, 8);
+                    return Number.isNaN(charCode)
+                        ? match
+                        : String.fromCharCode(charCode);
+                });
+        })();
+    }
+
+    return pdfStringDecoderPromise;
+}
+
+async function getFacturXFilenames() {
+    const decodePdfString = await getPdfStringDecoder();
+
+    return FACTUR_X_FILENAMES.map((name) => decodePdfString(name));
 }
 
 type Attachment = {
