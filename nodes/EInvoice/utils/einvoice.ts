@@ -186,7 +186,7 @@ export async function extractEInvoiceFromXML(
  * Validates profile identifier and maps it to standard profile names.
  * Throws error if XML is invalid or missing required data.
  */
-async function parseEInvoiceXML(xml: string, mode: 'json' | 'simple') {
+export async function parseEInvoiceXML(xml: string, mode: 'json' | 'simple') {
     const parserOptions = {
         mergeAttrs: true,
         explicitArray: false,
@@ -314,6 +314,16 @@ async function parseEInvoiceXML(xml: string, mode: 'json' | 'simple') {
 
   // Transaction details
   const settlement = ci.SupplyChainTradeTransaction?.ApplicableHeaderTradeSettlement;
+  const taxesRaw = settlement?.ApplicableTradeTax;
+  const taxes = Array.isArray(taxesRaw) ? taxesRaw : taxesRaw ? [taxesRaw] : [];
+
+  const lineItemsRaw = ci.SupplyChainTradeTransaction?.IncludedSupplyChainTradeLineItem;
+  const lineItems = Array.isArray(lineItemsRaw)
+      ? lineItemsRaw
+      : lineItemsRaw
+          ? [lineItemsRaw]
+          : [];
+
   simplified.transaction = {
       currency: settlement?.InvoiceCurrencyCode,
       totalGross: parseFloat(settlement?.SpecifiedTradeSettlementHeaderMonetarySummation?.GrandTotalAmount || '0'),
@@ -322,13 +332,13 @@ async function parseEInvoiceXML(xml: string, mode: 'json' | 'simple') {
       totalPrepaid: parseFloat(settlement?.SpecifiedTradeSettlementHeaderMonetarySummation?.TotalPrepaidAmount || '0'),
       totalPayable: parseFloat(settlement?.SpecifiedTradeSettlementHeaderMonetarySummation?.DuePayableAmount || '0'),
       paymentReference: settlement?.PaymentReference || '',
-      taxes: settlement?.ApplicableTradeTax?.map( (tax: any) => ({
+      taxes: taxes.map( (tax: any) => ({
           taxType: 'VAT',
           taxPercent: parseFloat(tax.RateApplicablePercent || '0'),
           taxAmount: parseFloat(tax.CalculatedAmount || '0'),
           totalNet: parseFloat(tax.BasisAmount || '0')
       })) || [],
-      positions: ci.SupplyChainTradeTransaction?.IncludedSupplyChainTradeLineItem?.map((item: any) => ({
+      positions: lineItems.map((item: any) => ({
           lineId: item.AssociatedDocumentLineDocument?.LineID,
           gtin: item.SpecifiedTradeProduct?.GlobalID,
           name: item.SpecifiedTradeProduct?.Name,
