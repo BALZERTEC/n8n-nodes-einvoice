@@ -32,8 +32,8 @@ function getPdfJs() {
 
             const { createRequire } = await import('node:module');
             const { pathToFileURL } = await import('node:url');
-            const require = createRequire(__filename);
-            const workerPath = require.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs');
+            const nodeRequire = createRequire(__filename);
+            const workerPath = nodeRequire.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs');
             const workerSrc = pathToFileURL(workerPath).toString();
 
             if (pdfjs.GlobalWorkerOptions) {
