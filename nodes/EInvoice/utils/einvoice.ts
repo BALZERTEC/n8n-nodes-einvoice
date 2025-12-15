@@ -338,14 +338,24 @@ export async function parseEInvoiceXML(xml: string, mode: 'json' | 'simple') {
           taxAmount: parseFloat(tax.CalculatedAmount || '0'),
           totalNet: parseFloat(tax.BasisAmount || '0')
       })) || [],
-      positions: lineItems.map((item: any) => ({
-          lineId: item.AssociatedDocumentLineDocument?.LineID,
-          gtin: item.SpecifiedTradeProduct?.GlobalID,
-          name: item.SpecifiedTradeProduct?.Name,
-          quantity: parseFloat(item.SpecifiedLineTradeDelivery?.BilledQuantity || '0'),
-          netItemPrice: parseFloat(item.SpecifiedLineTradeAgreement?.NetPriceProductTradePrice?.ChargeAmount || '0'),
-          total: parseFloat(item.SpecifiedLineTradeSettlement?.SpecifiedTradeSettlementLineMonetarySummation?.LineTotalAmount || '0')
-      })) || []
+      positions: lineItems.map((item: any) => {
+          const billedQuantity = item.SpecifiedLineTradeDelivery?.BilledQuantity;
+          const quantityRaw = typeof billedQuantity === 'object'
+              ? billedQuantity._ || billedQuantity['#text'] || billedQuantity.value
+              : billedQuantity;
+
+          return {
+              lineId: item.AssociatedDocumentLineDocument?.LineID,
+              gtin: item.SpecifiedTradeProduct?.GlobalID,
+              name: item.SpecifiedTradeProduct?.Name,
+              description: item.SpecifiedTradeProduct?.Description || null,
+              quantity: parseFloat(quantityRaw || '0'),
+              unitCode: typeof billedQuantity === 'object' ? billedQuantity.unitCode || '' : '',
+              grossItemPrice: parseFloat(item.SpecifiedLineTradeAgreement?.GrossPriceProductTradePrice?.ChargeAmount || '0'),
+              netItemPrice: parseFloat(item.SpecifiedLineTradeAgreement?.NetPriceProductTradePrice?.ChargeAmount || '0'),
+              total: parseFloat(item.SpecifiedLineTradeSettlement?.SpecifiedTradeSettlementLineMonetarySummation?.LineTotalAmount || '0')
+          };
+      }) || []
   };
 
       // Sanity Checks
