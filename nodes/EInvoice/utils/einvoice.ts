@@ -230,6 +230,7 @@ async function parseEInvoiceXML(xml: string, mode: 'json' | 'simple') {
           profile = "basic";
           break;
         case "urn:cen.eu:en16931:2017":
+        case "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0":
           profile = "en16931";
           break;
         case "urn:factur-x.eu:1p0:extended":
